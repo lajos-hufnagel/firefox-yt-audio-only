@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Audio-only for YouTube (PROTOTYPE)",
+  "version": "0.1.0",
+  "description": "PROTOTYPE, not for release: plays a YouTube video's audio-only stream in the page's own <video> element. No cookie access, no telemetry.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "audio-only-prototype@local.invalid",
+      "strict_min_version": "128.0"
+    }
+  },
+  "permissions": [],
+  "host_permissions": ["https://www.youtube.com/*"],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "action": {
+    "default_title": "Audio-only on/off (prototype)"
+  },
+  "commands": {
+    "toggle-audio-only": {
+      "suggested_key": { "default": "Alt+Shift+A" },
+      "description": "Audio-only on/off (prototype)"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

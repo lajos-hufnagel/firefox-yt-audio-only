@@ -1,0 +1,2 @@
+# Captured tool output is preserved exactly, including trailing whitespace.
+docs/release/evidence/*.log -whitespace
