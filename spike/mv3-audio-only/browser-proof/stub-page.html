@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>audio-only boundary proof</title></head>
+<body>
+<!--
+  Proof page for the Xray boundary, run in a real Firefox (see browser-proof/run.sh and the README section
+  "Checking it in the browser"). This file is served by browser-proof/server.js.
+
+  Deliberately a PLAIN page: the player methods define no `apply` of their own, so the browser's own
+  page-realm Function.prototype.apply is what the extension meets - `fn.apply(this, [..])` with a
+  content-script array is refused BY FIREFOX ("Permission denied to access property \"length\""), and
+  `fn.call(this)` (parameterless) simply runs. Nothing here models the boundary; it only records what
+  arrived and whether page code could read it.
+
+  The page reports in its own realm (same origin), so no Xray wrapper stands between the record and the
+  server.
+-->
+<div id="movie_player" style="width:320px">
+  <video id="probe-video" width="320" height="180"></video>
+</div>
+<pre id="log" style="font:12px monospace"></pre>
+<script>
+(function () {
+  var POST = '/report';
+  var records = [];
+  function send(entry) {
+    records.push(entry);
+    document.getElementById('log').textContent = JSON.stringify(records, null, 1);
+    try {
+      fetch(POST, {
+        method: 'POST',
+        headers: { 'content-type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ phase: 'page', entry: entry }),
+      });
+    } catch (e) { /* the record is on the page too */ }
+  }
+
+  var player = {
+    getVideoData: function () {
+      send({ call: 'getVideoData', args: arguments.length });
+      return { video_id: 'dQw4w9WgXcQ', author: 'proof', title: 'proof', errorcode: null };
+    },
+    getCurrentTime: function () {
+      // The page clock IS the element clock, like on YouTube. Before any source is loaded it reports the
+      // constant below, so the "page clock vs element position" order stays testable.
+      var v = document.getElementById('probe-video');
+      var t = v && typeof v.currentTime === 'number' && isFinite(v.currentTime) ? v.currentTime : null;
+      send({ call: 'getCurrentTime', args: arguments.length, clock: t === null ? 12.5 : t });
+      return t === null ? 12.5 : t;
+    },
+    loadVideoById: function (arg) {
+      var read = null, error = null;
+      // Reading a property of the argument is the whole test: page code may read a page-realm clone, and
+      // is refused on a content-script object (the live failure named `length`, the same rule).
+      try { read = { videoId: arg.videoId, startSeconds: arg.startSeconds }; }
+      catch (e) { error = e.name + ': ' + e.message; }
+      send({ call: 'loadVideoById', args: arguments.length, read: read, error: error });
+      if (error || !read) return undefined;
+      // The hand-back has to end in a usable playback of the page's own making - the page rebuilds it,
+      // exactly like YouTube's player does (a fresh source, not any stale blob URL).
+      var v = document.getElementById('probe-video');
+      var wasPlaying = !v.paused;
+      v.src = '/audio.wav?fresh=' + Date.now() + '&videoId=' + encodeURIComponent(read.videoId) +
+        '&start=' + (read.startSeconds === undefined ? 'none' : read.startSeconds);
+      v.load();
+      v.addEventListener('loadedmetadata', function once() {
+        v.removeEventListener('loadedmetadata', once);
+        if (typeof read.startSeconds === 'number') { v.currentTime = read.startSeconds; }
+        if (wasPlaying) { v.play().catch(function (e) { send({ call: 'resume', error: String(e) }); }); }
+        send({ call: 'rebuilt', duration: v.duration, at: v.currentTime, playing: !v.paused });
+      });
+      return undefined;
+    },
+  };
+
+  var el = document.getElementById('movie_player');
+  Object.keys(player).forEach(function (k) { el[k] = player[k]; });
+  window.__proofReady = true;
+
+  // The page plays its own source first, like a YouTube watch page does before anything is switched -
+  // otherwise there is no running playback to carry over and no progress to verify. Muted + autoplay is
+  // allowed without any user gesture, so this is deterministic in a headless run.
+  if (/full=1/.test(location.search)) {
+    var v = document.getElementById('probe-video');
+    v.muted = true;
+    v.autoplay = true;
+    v.src = '/audio.wav?page=1';
+    v.addEventListener('loadedmetadata', function () {
+      v.play().then(function () { send({ call: 'page-playing', at: v.currentTime }); },
+        function (e) { send({ call: 'page-play-refused', error: String(e) }); });
+    });
+  }
+})();
+</script>
+</body>
+</html>

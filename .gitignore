@@ -1,0 +1,20 @@
+# macOS metadata
+.DS_Store
+._*
+
+# Dependencies and local caches
+node_modules/
+.codegraph/
+.cache/
+
+# Local credentials/configuration
+.env
+.env.*
+!.env.example
+
+# Reproducible package archives remain local; build with node tools/package.js.
+dist/
+
+# Keep intentional verification evidence; ignore unrelated runtime logs.
+*.log
+!docs/release/evidence/*.log

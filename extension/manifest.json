@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "Audio-only for YouTube",
+  "version": "0.1.3",
+  "description": "Plays the audio-only stream of a YouTube video in the page's own player element. No video pixels, no cookie access, no telemetry.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "audio-only-prototype@local.invalid",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "websiteContent"
+        ]
+      }
+    }
+  },
+  "permissions": [],
+  "host_permissions": [
+    "https://www.youtube.com/*"
+  ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "action": {
+    "default_title": "Audio-only for YouTube: on/off"
+  },
+  "commands": {
+    "toggle-audio-only": {
+      "suggested_key": {
+        "default": "Alt+Shift+A"
+      },
+      "description": "Audio-only for YouTube: on/off"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "author": "Lajos Hufnagel"
+}
