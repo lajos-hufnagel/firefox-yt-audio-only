@@ -29,4 +29,4 @@ See [privacy](docs/release/privacy.md) and [manual verification](docs/release/te
 
 ## Rights
 
-Copyright 2026 Lajos Hufnagel. All rights reserved; see [LICENSE](LICENSE). Public source visibility does not grant an open-source license. See [provenance](docs/release/provenance-and-license.md).
+Copyright (c) 2026 Lajos Hufnagel. All rights reserved; see [LICENSE](LICENSE). Public source visibility does not grant an open-source license. Third-party rights remain unchanged. See [provenance](docs/release/provenance-and-license.md).
